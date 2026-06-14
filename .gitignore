@@ -1,0 +1,9 @@
+out
+dist
+node_modules
+.vscode-test/
+coverage
+*.vsix
+
+# Local planning notes — persisted to engram, not the repo.
+PLAN.md
