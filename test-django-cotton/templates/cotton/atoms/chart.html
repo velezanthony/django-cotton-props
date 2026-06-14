@@ -1,0 +1,10 @@
+<!-- TEST FIXTURE: `labels` and `datasets` are declared as @prop but
+     INTENTIONALLY left out of <c-vars> to exercise the "@prop missing from
+     <c-vars>" diagnostic (and its quick-fixes). -->
+{# @description A data chart canvas. #}
+{# @prop :labels:text | default:"[]" | description:"Chart labels" #}
+{# @prop :datasets:text | default:"[]" | description:"Chart datasets" #}
+{# @prop type:select['line', 'bar', 'pie'] | default:"line" | description:"Chart type" #}
+<c-vars type="line" />
+
+<canvas class="chart chart-{{ type }}" data-labels="{{ labels }}" data-datasets="{{ datasets }}"></canvas>

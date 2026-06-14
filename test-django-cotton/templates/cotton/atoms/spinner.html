@@ -1,0 +1,6 @@
+{# @description A loading spinner. #}
+{# @prop size:select['sm', 'md', 'lg'] | default:"md" | description:"Spinner size" #}
+{# @prop color:text | default:"brand" | description:"Color token" #}
+<c-vars size="md" color="brand" />
+
+<span class="spinner spinner-{{ size }}" style="color: var(--{{ color }})" role="status"></span>

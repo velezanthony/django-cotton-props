@@ -1,0 +1,10 @@
+<!-- TEST FIXTURE: `title` is declared as @prop but INTENTIONALLY left out of
+     <c-vars> to exercise the "@prop missing from <c-vars>" diagnostic. -->
+{# @strict #}
+{# @prop title:text | description:"Title shown in the header" #}
+<c-vars />
+
+<div class="strict-comp">
+  <h3>{{ title }}</h3>
+  {{ slot }}
+</div>

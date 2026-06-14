@@ -1,0 +1,7 @@
+{# @description A collapsible sidebar. #}
+{# @prop collapsed:boolean | default:False | description:"Start collapsed" #}
+<c-vars collapsed=False />
+
+<aside class="sidebar{% if collapsed %} sidebar-collapsed{% endif %}">
+  {{ slot }}
+</aside>

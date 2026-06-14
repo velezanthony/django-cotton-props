@@ -1,0 +1,6 @@
+{# @description An inline SVG icon. #}
+{# @prop name:text | description:"Icon name" | required #}
+{# @prop size:select['sm', 'md', 'lg'] | default:"md" | description:"Icon size" #}
+<c-vars name size="md" />
+
+<span class="icon icon-{{ name }} icon-{{ size }}" aria-hidden="true"></span>

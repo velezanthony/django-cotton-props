@@ -1,0 +1,10 @@
+<!-- TEST FIXTURE: the `count` default is INTENTIONALLY mismatched (@prop=5 vs
+     <c-vars>=0) to exercise the "default mismatch" diagnostic. Don't "fix" it. -->
+{# @description A small count badge. #}
+{# @prop :count:number | default:5 | description:"Number to display" #}
+{# @prop :max:number | default:99 | description:"Maximum before showing max+" #}
+<c-vars :count="0" :max="99" />
+
+{% if count and count > 0 %}
+  <span class="badge">{% if count > max %}{{ max }}+{% else %}{{ count }}{% endif %}</span>
+{% endif %}
