@@ -6,7 +6,7 @@ suite('Scanner', () => {
 
     test('scanComponents finds real project components', () => {
         const components = scanComponents();
-        assert.ok(components.length >= 90, `Should find 90+ components, got ${components.length}`);
+        assert.ok(components.length >= 10, `Should find the fixture components, got ${components.length}`);
 
         const tags = components.map(c => c.tag);
         assert.ok(tags.includes('atoms.button'), 'Should find atoms.button');

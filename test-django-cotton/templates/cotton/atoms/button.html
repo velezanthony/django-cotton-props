@@ -1,0 +1,13 @@
+{# @prop variant:select['primary', 'secondary', 'tertiary', 'danger', 'ghost'] | default:"primary" | description:"Style variant" #}
+{# @prop size:select['sm', 'md', 'lg'] | default:"md" | description:"Button size" #}
+{# @prop type:text | default:"button" | description:"HTML button type" #}
+{# @prop loading:boolean | default:False | description:"Show loading spinner" #}
+{# @prop full-width:boolean | default:False | description:"Stretch to full width" #}
+{# @prop disabled:boolean | default:False | description:"Disable interaction" #}
+{# @slot Click me — Button label #}
+<c-vars variant="primary" size="md" type="button" loading=False full-width=False disabled=False />
+
+<button type="{{ type }}" class="btn btn-{{ variant }} btn-{{ size }}{% if full_width %} btn-block{% endif %}"{% if disabled %} disabled{% endif %}>
+  {% if loading %}<span class="spinner"></span>{% endif %}
+  {{ slot }}
+</button>

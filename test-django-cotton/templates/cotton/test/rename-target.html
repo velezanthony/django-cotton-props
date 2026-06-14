@@ -1,0 +1,8 @@
+{# @prop variant:select['primary', 'secondary', 'tertiary'] | default:"primary" | description:"Style variant" #}
+{# @prop full-width:boolean | default:False | description:"Stretch to full width" #}
+{# @prop :count:number | default:0 | description:"Item count" #}
+<c-vars variant="primary" full-width=False :count="0" />
+
+<div class="rename-target rename-target-{{ variant }}{% if full_width %} full{% endif %}">
+  {{ slot }} ({{ count }})
+</div>

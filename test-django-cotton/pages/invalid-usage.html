@@ -1,0 +1,23 @@
+<!-- Component not found -->
+<c-atoms.nonexistent>Test</c-atoms.nonexistent>
+
+<!-- Invalid select value -->
+<c-atoms.button variant="invalid-value">Click</c-atoms.button>
+
+<!-- Invalid boolean value -->
+<c-atoms.button loading="maybe">Click</c-atoms.button>
+
+<!-- Duplicate prop on same tag -->
+<c-atoms.button variant="primary" variant="secondary">Click</c-atoms.button>
+
+<!-- Unknown prop in strict mode -->
+<c-test.strict-comp title="Hello" unknown-prop="test" />
+
+<!-- Missing required props -->
+<c-test.required-comp />
+
+<!-- Deprecated prop usage -->
+<c-test.deprecated-comp title="Card" old-color="red" />
+
+<!-- Invalid number value (non-dynamic) -->
+<c-atoms.badge count="abc" />

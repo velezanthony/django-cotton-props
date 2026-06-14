@@ -1,0 +1,25 @@
+# Test-fixture Django workspace — only the component templates and usage
+# files matter for the extension's integration tests. Everything Python /
+# generated stays out.
+
+# Virtualenv (uv)
+.venv/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Django
+db.sqlite3
+*.sqlite3
+/staticfiles/
+/media/
+
+# Tooling caches
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
+# Environment
+.env
