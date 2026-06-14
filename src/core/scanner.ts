@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import { parseComponent } from './parser';
 import { nameVariations } from './naming';
 import { HTML_EXT, HTML_GLOB, DEFAULT_EXCLUDE_SEGMENTS } from './constants';
+import { isFileNotFound } from './helpers';
 import type { ComponentInfo, CachedComponent, ParsedComponent, PropDefinition } from './models';
 
 interface PropsCacheEntry {
@@ -39,7 +40,10 @@ function getCached(filePath: string): CachedComponent {
         propsCache.set(filePath, { component, lastStatAt: now });
         return component;
     } catch (err) {
-        console.error(`[Cotton] Failed to read component: ${filePath}`, err);
+        // Log only the unexpected — a not-found here is the normal delete/rename race.
+        if (!isFileNotFound(err)) {
+            console.error(`[Cotton] Failed to read component: ${filePath}`, err);
+        }
         return EMPTY_CACHED;
     }
 }
