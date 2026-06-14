@@ -4,6 +4,7 @@
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/velezanthony.django-cotton-props?color=0F172A)](https://marketplace.visualstudio.com/items?itemName=velezanthony.django-cotton-props)
 [![Rating](https://img.shields.io/visual-studio-marketplace/r/velezanthony.django-cotton-props?color=0F172A)](https://marketplace.visualstudio.com/items?itemName=velezanthony.django-cotton-props)
 [![License: MIT](https://img.shields.io/badge/License-MIT-0F172A.svg)](LICENSE)
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/velezanthony)
 
 > **Full IntelliSense, validation, and tooling for [Django Cotton](https://django-cotton.com/) components in VS Code** — autocomplete, hover docs, 21 diagnostic rules, quick fixes, and a component explorer. Stop guessing prop names and catch template mistakes before they hit the runtime.
 
