@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { scanComponents, findComponentFile, filePathToTag, isCottonFile } from '../../core/scanner';
+import { scanComponents, findComponentFile, filePathToTag, isCottonFile, getCachedComponent } from '../../core/scanner';
 
 suite('Scanner', () => {
 
@@ -80,4 +80,30 @@ suite('Scanner', () => {
         const uri = vscode.Uri.file('/tmp/random.html');
         assert.strictEqual(isCottonFile(uri), false);
     });
+});
+
+suite('getCached error model', () => {
+    /** Replace console.error with a recorder; returns the calls + a restore fn. */
+    function spyConsoleError() {
+        const original = console.error;
+        const calls: unknown[][] = [];
+        console.error = (...args: unknown[]) => { calls.push(args); };
+        return { calls, restore: () => { console.error = original; } };
+    }
+
+    test('a MISSING component file is handled quietly (no error log)', () => {
+        const spy = spyConsoleError();
+        try {
+            const result = getCachedComponent('/no/such/dir/missing-component.html');
+            assert.strictEqual(result.props.length, 0, 'a missing file yields an empty component');
+        } finally {
+            spy.restore();
+        }
+        assert.strictEqual(spy.calls.length, 0,
+            `a missing file is an expected race and must not be logged, got: ${JSON.stringify(spy.calls)}`);
+    });
+
+    // The inverse — a genuine (non-not-found) error IS still logged — is covered by
+    // the isFileNotFound unit tests plus the literal `if (!isFileNotFound) log`. An
+    // integration test for it was flaky: background activity races getCached's stat cache.
 });

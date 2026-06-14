@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { scanComponents, invalidateScanCache, prewarmScanCache, getTemplatePaths, buildWatchGlob } from './core/scanner';
 import { COMMANDS, EXTENSION_NAME, SUPPORTED_LANGUAGES } from './core/constants';
 import { shouldRetriggerTagCompletion } from './core/helpers/retrigger';
+import { isFileNotFound } from './core/helpers';
 import {
     TagCompletionProvider,
     IsValueCompletionProvider,
@@ -147,10 +148,16 @@ export function activate(context: vscode.ExtensionContext) {
         // instead of doing a sync directory walk on the typing hot path.
         await prewarmScanCache();
         try {
-            const doc = await vscode.workspace.openTextDocument(uri);
-            usageIndex.updateFile(uri, doc.getText());
+            // Read from disk via fs.readFile: the watcher reports disk (not unsaved
+            // buffers), and fs.readFile surfaces a proper FileNotFound code —
+            // openTextDocument's error is codeless and can't be told apart.
+            const bytes = await vscode.workspace.fs.readFile(uri);
+            usageIndex.updateFile(uri, new TextDecoder().decode(bytes));
         } catch (err) {
-            console.error(`[Cotton] Failed to reindex file: ${uri.fsPath}`, err);
+            // Log only the unexpected — a file deleted mid-event is the normal race.
+            if (!isFileNotFound(err)) {
+                console.error(`[Cotton] Failed to reindex file: ${uri.fsPath}`, err);
+            }
         }
         refreshDerivedViews();
     }
