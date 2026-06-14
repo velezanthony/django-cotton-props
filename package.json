@@ -1,0 +1,242 @@
+{
+  "name": "django-cotton-props",
+  "displayName": "Django Cotton Props",
+  "description": "IntelliSense, validation, and refactoring for Django Cotton — autocomplete, hover docs, 21 diagnostics, quick fixes, and a component explorer.",
+  "version": "1.0.0",
+  "publisher": "velezanthony",
+  "license": "MIT",
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#0F172A",
+    "theme": "dark"
+  },
+  "author": {
+    "name": "Anthony Velez",
+    "email": "velezanthony2000@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/velezanthony/django-cotton-props.git"
+  },
+  "bugs": {
+    "url": "https://github.com/velezanthony/django-cotton-props/issues"
+  },
+  "homepage": "https://github.com/velezanthony/django-cotton-props#readme",
+  "keywords": [
+    "django",
+    "django cotton",
+    "cotton",
+    "components",
+    "templates",
+    "html",
+    "intellisense",
+    "autocomplete",
+    "completion",
+    "linter",
+    "diagnostics",
+    "snippets"
+  ],
+  "engines": {
+    "vscode": "^1.97.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Snippets"
+  ],
+  "activationEvents": [
+    "onLanguage:html",
+    "onLanguage:django-html"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "django-html",
+        "aliases": [
+          "Django HTML",
+          "django-html"
+        ]
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "cotton-explorer",
+          "title": "Cotton Components",
+          "icon": "media/cotton-activitybar.svg"
+        }
+      ]
+    },
+    "views": {
+      "cotton-explorer": [
+        {
+          "id": "cottonComponentsTree",
+          "name": "Components"
+        },
+        {
+          "id": "cottonComponentDetail",
+          "name": "Detail",
+          "type": "webview",
+          "when": "cotton.detailVisible"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "cotton.openComponent",
+        "title": "Open Component",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "cotton.refreshTree",
+        "title": "Refresh Components",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "cotton.copyTag",
+        "title": "Copy Tag",
+        "icon": "$(clippy)"
+      },
+      {
+        "command": "cotton.wrapWithComponent",
+        "title": "Django Cotton Props: Wrap with Component"
+      },
+      {
+        "command": "cotton.extractComponent",
+        "title": "Django Cotton Props: Extract to Component"
+      },
+      {
+        "command": "cotton.findExtractablePatterns",
+        "title": "Django Cotton Props: Find Extractable Patterns"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "cotton.refreshTree",
+          "when": "view == cottonComponentsTree",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "cotton.wrapWithComponent",
+          "when": "editorHasSelection && resourceLangId =~ /html|django-html/",
+          "group": "1_modification"
+        },
+        {
+          "command": "cotton.extractComponent",
+          "when": "editorHasSelection && resourceLangId =~ /html|django-html/",
+          "group": "1_modification"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "cotton.copyTag",
+          "when": "view == cottonComponentsTree && viewItem == component",
+          "group": "inline@1"
+        },
+        {
+          "command": "cotton.openComponent",
+          "when": "view == cottonComponentsTree && viewItem == component",
+          "group": "inline@2"
+        }
+      ]
+    },
+    "snippets": [
+      {
+        "language": "html",
+        "path": "./snippets.json"
+      },
+      {
+        "language": "django-html",
+        "path": "./snippets.json"
+      }
+    ],
+    "configuration": {
+      "title": "Django Cotton Props",
+      "properties": {
+        "djangoCottonProps.templatePaths": {
+          "type": "array",
+          "default": [
+            "templates/cotton"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Where your Cotton components live, as path suffixes matched at ANY depth: a single \"templates/cotton\" entry already covers the project root and every Django app (\"shop/templates/cotton\", \"users/templates/cotton\", …) — no need to list each app. This is declared manually on purpose: the extension never parses your Django settings (settings.py, COTTON_DIR, custom constants files), so it works no matter how the project is structured. Add more entries only for differently-named folders (e.g. \"templates/components\"). Changes apply immediately — no reload."
+        },
+        "djangoCottonProps.excludePaths": {
+          "type": "array",
+          "default": [
+            "node_modules",
+            "dist",
+            "build",
+            "venv",
+            "__pycache__",
+            "coverage",
+            ".*"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Folders to skip when scanning the workspace for where components are USED (not where they're defined — that's templatePaths). \".*\" matches any dot-directory (.venv, .git, .mypy_cache, …). Changes apply immediately — no reload."
+        },
+        "djangoCottonProps.inlayHints.showDefaults": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show default values as inlay hints for unset props in component usages"
+        },
+        "djangoCottonProps.dynamicAttr.showExpressionHint": {
+          "type": "boolean",
+          "default": true,
+          "description": "Render faded {{ }} braces around dynamic :prop=\"...\" values and tint them as Django variables, signalling that the value is an expression rather than a literal string"
+        },
+        "djangoCottonProps.diagnostics.missingDescription.severity": {
+          "type": "string",
+          "enum": [
+            "hint",
+            "warning",
+            "off"
+          ],
+          "enumDescriptions": [
+            "Hint — quiet (default). Only visible on hover or in the Problems panel.",
+            "Warning — yellow squigglies, count toward the file's warning badge.",
+            "Off — disable the diagnostic entirely."
+          ],
+          "default": "hint",
+          "description": "Severity for the 'missing prop description' diagnostic. Set to 'warning' to match django-cotton-gallery's CLI linter, or 'off' to disable on legacy components with many undocumented props."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vscode-test",
+    "pretest:coverage": "npm run pretest",
+    "test:coverage": "vscode-test --coverage"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.19.17",
+    "@types/vscode": "1.97.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.27.3",
+    "eslint": "^9.39.3",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1"
+  }
+}

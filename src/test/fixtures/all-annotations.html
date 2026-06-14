@@ -1,0 +1,16 @@
+{# @description Component that exercises every supported annotation. #}
+{# @prop title:text | required | description:"Page title" #}
+{# @prop count:number | default:0 | description:"Item count" #}
+{# @prop variant:select['primary','secondary','ghost'] | default:"primary" | description:"Visual style" #}
+{# @prop is_active:boolean | default:True | description:"Active state" #}
+{# @prop :dynamic_attr:text | description:"Dynamic-prefix prop" #}
+{# @slot — Default content area. #}
+{# @slot:header — Header slot for custom content. #}
+{# @slot:footer #}
+{# @trigger <button>Open</button> — Element that opens the modal. #}
+<c-vars title count="0" variant="primary" is_active=True :dynamic_attr />
+
+<button>{% slot trigger %}Open{% endslot %}</button>
+<header>{% slot header %}{% endslot %}</header>
+<main>{% slot %}{% endslot %}</main>
+<footer>{% slot footer %}{% endslot %}</footer>

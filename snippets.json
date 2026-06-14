@@ -1,0 +1,77 @@
+{
+    "@prop:text": {
+        "prefix": "@prop:text",
+        "body": "{# @prop ${1:name}:text | default:\"${2:}\" | description:\"${3:Description}\" #}",
+        "description": "Cotton text prop — free string input"
+    },
+    "@prop:number": {
+        "prefix": "@prop:number",
+        "body": "{# @prop ${1::}${2:name}:number | default:${3:0} | description:\"${4:Description}\" #}",
+        "description": "Cotton number prop — numeric value"
+    },
+    "@prop:boolean": {
+        "prefix": "@prop:boolean",
+        "body": "{# @prop ${1:name}:boolean | default:${2|True,False|} | description:\"${3:Description}\" #}",
+        "description": "Cotton boolean prop — True or False"
+    },
+    "@prop:select": {
+        "prefix": "@prop:select",
+        "body": "{# @prop ${1:name}:select['${2:opt1}', '${3:opt2}'] | default:\"${2:opt1}\" | description:\"${4:Description}\" #}",
+        "description": "Cotton select prop — predefined options"
+    },
+    "@prop:text:required": {
+        "prefix": "@prop:text:required",
+        "body": "{# @prop ${1:name}:text | description:\"${2:Description}\" | required #}",
+        "description": "Cotton required text prop — no default"
+    },
+    "@prop:number:required": {
+        "prefix": "@prop:number:required",
+        "body": "{# @prop ${1:name}:number | description:\"${2:Description}\" | required #}",
+        "description": "Cotton required number prop — no default"
+    },
+    "@prop:boolean:required": {
+        "prefix": "@prop:boolean:required",
+        "body": "{# @prop ${1:name}:boolean | description:\"${2:Description}\" | required #}",
+        "description": "Cotton required boolean prop — no default"
+    },
+    "@prop:select:required": {
+        "prefix": "@prop:select:required",
+        "body": "{# @prop ${1:name}:select['${2:opt1}', '${3:opt2}'] | description:\"${4:Description}\" | required #}",
+        "description": "Cotton required select prop — no default"
+    },
+    "@description": {
+        "prefix": "@description",
+        "body": "{# @description ${1:One-line component summary.} #}",
+        "description": "Cotton component description — single line shown on hover"
+    },
+    "@slot": {
+        "prefix": "@slot",
+        "body": "{# @slot ${1:Default content} — ${2:Description} #}",
+        "description": "Cotton slot — default content"
+    },
+    "@slot — description": {
+        "prefix": "@slot",
+        "body": "{# @slot — ${1:Description} #}",
+        "description": "Cotton default slot — description only (no default content)"
+    },
+    "@slot:NAME": {
+        "prefix": "@slot:",
+        "body": "{# @slot:${1:slotname} #}",
+        "description": "Cotton named slot — bare declaration"
+    },
+    "@slot:NAME — description": {
+        "prefix": "@slot:",
+        "body": "{# @slot:${1:slotname} — ${2:Description} #}",
+        "description": "Cotton named slot — with description"
+    },
+    "@trigger": {
+        "prefix": "@trigger",
+        "body": "{# @trigger ${1:element} — ${2:Description} #}",
+        "description": "Cotton trigger element for modals/drawers"
+    },
+    "@strict": {
+        "prefix": "@strict",
+        "body": "{# @strict #}",
+        "description": "Cotton strict mode — unknown props show as warnings"
+    }
+}
