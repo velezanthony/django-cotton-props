@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { scanComponents, invalidateScanCache, prewarmScanCache, getTemplatePaths, buildWatchGlob } from './core/scanner';
 import { COMMANDS, EXTENSION_NAME, SUPPORTED_LANGUAGES } from './core/constants';
+import { shouldRetriggerTagCompletion } from './core/helpers/retrigger';
 import {
     TagCompletionProvider,
     IsValueCompletionProvider,
@@ -245,6 +246,28 @@ function registerLanguageFeatures(
         ...createDynamicAttrDecorator(),
         vscode.languages.registerDocumentDropEditProvider(selector, new CottonDropEditProvider(), { dropMimeTypes: [COTTON_DRAG_MIME] }),
         diagnostics,
+    );
+
+    // Re-open the tag-completion popup when the user DELETES a character while
+    // editing a `<c-...` tag name. VS Code only auto-triggers completion on the
+    // `<` trigger char or while typing — never on deletion — so without this the
+    // popup that closed never comes back. The decision lives in a pure, tested
+    // helper; this listener is just the wire to `editor.action.triggerSuggest`.
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeTextDocument(e => {
+            const editor = vscode.window.activeTextEditor;
+            if (!editor || editor.document !== e.document) { return; }
+            if (vscode.languages.match(selector, e.document) === 0) { return; }
+            for (const change of e.contentChanges) {
+                const isDeletion = change.text.length === 0 && change.rangeLength > 0;
+                const start = change.range.start;
+                const linePrefix = e.document.lineAt(start.line).text.slice(0, start.character);
+                if (shouldRetriggerTagCompletion(linePrefix, isDeletion)) {
+                    void vscode.commands.executeCommand('editor.action.triggerSuggest');
+                    return;
+                }
+            }
+        }),
     );
 }
 

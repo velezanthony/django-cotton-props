@@ -10,6 +10,13 @@ export class PropCompletionProvider implements vscode.CompletionItemProvider {
         // leak the prop list into the quotes (ValueCompletionProvider handles it).
         if (isInsideAttributeValue(linePrefix)) { return undefined; }
 
+        // While the cursor is still glued to the tag name (no separating space
+        // yet) the user is editing the NAME — e.g. mid-edit after deleting a
+        // letter — not adding attributes. The name may even resolve transiently
+        // to a real component, but its props are premature here: props belong in
+        // attribute position, after the tag name AND a space.
+        if (/<c-[\w.-]*$/.test(linePrefix)) { return undefined; }
+
         const offset = document.offsetAt(position);
         const tag = findTagContext(document, offset);
         if (!tag) { return undefined; }
