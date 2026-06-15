@@ -6,7 +6,7 @@ This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
 ## [Unreleased]
 
-## [1.0.0] — 2026-06-13
+## [1.0.0] — 2026-06-15
 
 First public release — a complete IntelliSense, validation, and tooling suite for [Django Cotton](https://django-cotton.com/) components in VS Code.
 

@@ -1,0 +1,33 @@
+name: Publish
+
+# Publishes to the VS Code Marketplace when a GitHub Release is published.
+# vsce reads the version from package.json (keep it in sync with the release
+# tag). `vsce publish` runs `vscode:prepublish` first, so type-check, lint and
+# the production build gate the publish — a broken build never ships.
+#
+# Requires a repository secret `VSCE_PAT`: an Azure DevOps Personal Access Token
+# with the Marketplace → Manage scope. vsce reads it from the VSCE_PAT env var.
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    name: Publish to VS Code Marketplace
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish
+        run: npx --yes @vscode/vsce publish
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
