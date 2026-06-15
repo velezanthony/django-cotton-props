@@ -74,7 +74,15 @@ export function activate(context: vscode.ExtensionContext) {
 
     // ── Commands ──
     context.subscriptions.push(
-        vscode.commands.registerCommand(COMMANDS.REFRESH_TREE, () => treeProvider.refresh()),
+        vscode.commands.registerCommand(COMMANDS.REFRESH_TREE, async () => {
+            // A real hard refresh: drop the cache and re-scan disk (honouring the
+            // current templatePaths / excludePaths), then refresh the views — not
+            // just a re-render of the stale cache.
+            invalidateScanCache();
+            await prewarmScanCache();
+            await usageIndex.rescan();
+            refreshDerivedViews();
+        }),
         vscode.commands.registerCommand(COMMANDS.OPEN_COMPONENT, (item: ComponentItem) => {
             vscode.window.showTextDocument(vscode.Uri.file(item.filePath));
         }),
@@ -197,15 +205,25 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.workspace.onDidChangeConfiguration(async e => {
             const tplChanged = e.affectsConfiguration('djangoCottonProps.templatePaths');
             const excChanged = e.affectsConfiguration('djangoCottonProps.excludePaths');
-            if (!tplChanged && !excChanged) { return; }
-            if (tplChanged) {
-                setupWatcher();
+            const sevChanged = e.affectsConfiguration('djangoCottonProps.diagnostics.missingDescription.severity');
+            if (!tplChanged && !excChanged && !sevChanged) { return; }
+            // The watcher glob is built from templatePaths, so only that needs it rebuilt.
+            if (tplChanged) { setupWatcher(); }
+            // Both settings change the scan SCOPE (definitions feed the tree), so
+            // either must rebuild the scan cache — not just the usage index.
+            // Without this, an excluded folder stayed stale in the tree.
+            if (tplChanged || excChanged) {
                 invalidateScanCache();
                 await prewarmScanCache();
-                vscode.workspace.textDocuments.forEach(d => diagProvider.update(d));
             }
+            // excludePaths also narrows where component USAGES are scanned.
             if (excChanged) {
                 await usageIndex.rescan();
+            }
+            // Re-validate open docs when anything diagnostics depend on changed:
+            // the scan scope (which tags are known) or the severity knob itself.
+            if (tplChanged || excChanged || sevChanged) {
+                vscode.workspace.textDocuments.forEach(d => diagProvider.update(d));
             }
             refreshDerivedViews();
         }),

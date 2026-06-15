@@ -184,7 +184,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Folders to skip when scanning the workspace for where components are USED (not where they're defined — that's templatePaths). \".*\" matches any dot-directory (.venv, .git, .mypy_cache, …). Changes apply immediately — no reload."
+          "description": "Folders to skip entirely when scanning the workspace — both where components are DEFINED (so they drop out of the tree, e.g. \"templates/cotton/icons\") and where they are USED. \".*\" matches any dot-directory (.venv, .git, .mypy_cache, …). Changes apply immediately — no reload."
         },
         "djangoCottonProps.inlayHints.showDefaults": {
           "type": "boolean",
