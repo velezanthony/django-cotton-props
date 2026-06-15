@@ -5,6 +5,10 @@
 
 # ── Dev tooling / editor config ──
 .vscode/**
+# `.vscode-test` is a SYMLINK to a dir; the bare name excludes the symlink entry
+# itself (the `/**` only covers its contents), else vsce's secret scanner tries
+# to read the symlink as a file and dies with EISDIR.
+.vscode-test
 .vscode-test/**
 .github/**
 out/**
