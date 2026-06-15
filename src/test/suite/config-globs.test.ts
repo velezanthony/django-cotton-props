@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { buildExcludeGlob, buildWatchGlob } from '../../core/scanner';
+import { buildExcludeGlob, buildWatchGlob, isExcludedDir } from '../../core/scanner';
 import { DEFAULT_EXCLUDE_SEGMENTS } from '../../core/constants';
 
 suite('Config globs: buildExcludeGlob', () => {
@@ -28,6 +28,33 @@ suite('Config globs: buildWatchGlob', () => {
             buildWatchGlob(['templates/cotton', 'myapp/ui']),
             '{**/templates/cotton/**/*.html,**/myapp/ui/**/*.html}',
         );
+    });
+});
+
+suite('Config globs: isExcludedDir (sync walk parity)', () => {
+    const segs = [...DEFAULT_EXCLUDE_SEGMENTS, 'templates/cotton/icons'];
+
+    test('matches a plain directory name', () => {
+        assert.strictEqual(isExcludedDir('node_modules', 'a/node_modules', segs), true);
+        assert.strictEqual(isExcludedDir('__pycache__', 'x/y/__pycache__', segs), true);
+    });
+
+    test('".*" wildcard matches any dot-directory by name', () => {
+        assert.strictEqual(isExcludedDir('.venv', 'foo/.venv', segs), true);
+        assert.strictEqual(isExcludedDir('.git', '.git', segs), true);
+    });
+
+    test('a non-excluded directory is kept', () => {
+        assert.strictEqual(isExcludedDir('components', 'templates/cotton/components', segs), false);
+        assert.strictEqual(isExcludedDir('atoms', 'templates/cotton/atoms', segs), false);
+    });
+
+    test('multi-segment entry matches a path suffix, not just a name', () => {
+        // The folder is named "icons" but only excluded under templates/cotton.
+        assert.strictEqual(isExcludedDir('icons', 'templates/cotton/icons', segs), true);
+        assert.strictEqual(isExcludedDir('icons', 'shop/templates/cotton/icons', segs), true);
+        // A different "icons" elsewhere must survive.
+        assert.strictEqual(isExcludedDir('icons', 'templates/cotton/atoms/icons', segs), false);
     });
 });
 
