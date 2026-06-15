@@ -47,10 +47,20 @@
     "Linters",
     "Snippets"
   ],
+  "pricing": "Free",
   "activationEvents": [
     "onLanguage:html",
     "onLanguage:django-html"
   ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Component discovery reads files from disk, which virtual file systems don't support."
+    }
+  },
   "main": "./dist/extension.js",
   "contributes": {
     "languages": [
