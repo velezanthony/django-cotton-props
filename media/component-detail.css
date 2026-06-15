@@ -1,0 +1,68 @@
+body {
+    font-family: var(--vscode-font-family);
+    font-size: 13px;
+    color: var(--vscode-foreground);
+    padding: 12px;
+    line-height: 1.6;
+}
+h2 { margin: 0 0 8px; font-size: 1.3em; }
+h3 { margin: 20px 0 8px; font-size: 0.95em; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7; }
+
+/* Responsive: cards en vez de tabla cuando el panel es estrecho */
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 6px 10px; border-bottom: 2px solid var(--vscode-panel-border); opacity: 0.6; font-size: 0.8em; text-transform: uppercase; }
+td { padding: 6px 10px; border-bottom: 1px solid var(--vscode-panel-border); vertical-align: top; }
+
+/* Card layout for narrow panels */
+@media (max-width: 400px) {
+    table, thead, tbody, tr, th, td { display: block; }
+    thead { display: none; }
+    tr { margin-bottom: 12px; padding: 8px; border: 1px solid var(--vscode-panel-border); border-radius: 6px; }
+    td { padding: 3px 0; border: none; }
+    td:before { content: attr(data-label); font-size: 0.75em; text-transform: uppercase; opacity: 0.5; display: block; }
+}
+
+code { font-family: var(--vscode-editor-font-family); font-size: 12px; background: var(--vscode-textCodeBlock-background); padding: 2px 5px; border-radius: 3px; }
+pre { background: var(--vscode-textCodeBlock-background); padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 12px; max-height: 400px; line-height: 1.5; }
+pre code { background: none; padding: 0; }
+.badge { display: inline-block; font-size: 0.75em; padding: 2px 6px; border-radius: 3px; font-weight: 600; margin-left: 4px; }
+.badge.required { background: #dc262620; color: #f87171; }
+.badge.deprecated { background: #f59e0b20; color: #fbbf24; }
+.badge.hidden { background: #6b728020; color: #9ca3af; }
+.badge.strict { background: #8b5cf620; color: #a78bfa; margin-bottom: 8px; display: inline-block; }
+.type { font-size: 0.8em; padding: 2px 7px; border-radius: 3px; font-weight: 500; }
+.type.bool { background: #f59e0b20; color: #fbbf24; }
+.type.num { background: #22c55e20; color: #4ade80; }
+.type.str { background: #6b728020; color: #9ca3af; }
+.type.select { background: #3b82f620; color: #60a5fa; }
+.deprecated-name { text-decoration: line-through; opacity: 0.6; }
+.dep-note { color: #f87171; opacity: 0.8; }
+.slot { padding: 4px 0; }
+.empty { opacity: 0.5; text-align: center; margin-top: 40px; }
+
+/* ── Source highlight ──
+   VS Code doesn't expose syntax-token colors to webviews directly, so we
+   lean on debug-token vars (the closest theme-aware semantic palette)
+   and fall back to hand-picked values that work in both light and dark
+   themes. */
+pre.source {
+    color: var(--vscode-editor-foreground);
+}
+pre.source .tok-bracket { color: var(--vscode-descriptionForeground); }
+pre.source .tok-tag     { color: var(--vscode-debugTokenExpression-name, #569CD6); font-weight: 500; }
+pre.source .tok-attr    { color: var(--vscode-symbolIcon-propertyForeground, #9CDCFE); }
+pre.source .tok-string  { color: var(--vscode-debugTokenExpression-string, #CE9178); }
+pre.source .tok-punct   { color: var(--vscode-descriptionForeground); opacity: 0.7; }
+pre.source .tok-comment {
+    color: var(--vscode-editorLineNumber-foreground, #6A9955);
+    font-style: italic;
+}
+pre.source .tok-anno    { color: var(--vscode-symbolIcon-keywordForeground, #C586C0); font-weight: 600; font-style: normal; }
+pre.source .tok-filter  { color: var(--vscode-symbolIcon-functionForeground, #DCDCAA); font-style: normal; }
+pre.source .tok-django  {
+    color: var(--vscode-debugTokenExpression-value, #B5CEA8);
+    background: color-mix(in srgb, var(--vscode-textCodeBlock-background, transparent) 60%, transparent);
+    padding: 1px 2px;
+    border-radius: 2px;
+}
+pre.source .tok-keyword { color: var(--vscode-symbolIcon-keywordForeground, #C586C0); }

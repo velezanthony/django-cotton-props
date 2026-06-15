@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+
+# Cancel an in-progress run when a newer commit is pushed to the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Integration tests (headless VS Code)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # VS Code (Electron) needs a virtual display plus its runtime libraries.
+      # Install them explicitly rather than assume the runner image ships them
+      # (keeps the workflow portable across runner / container images).
+      - name: Install Xvfb and Electron runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            xvfb \
+            libnss3 libnspr4 libgbm1 libasound2t64 \
+            libgtk-3-0t64 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 \
+            libxkbcommon0 libxdamage1 libxcomposite1 libxfixes3 libxrandr2 libxshmfence1
+
+      # The full suite drives a real VS Code (Electron) instance against the
+      # public `test-django-cotton` fixture. `xvfb-run` gives it a virtual
+      # display so it runs headless on the runner; `npm test` downloads the
+      # pinned VS Code build into `.vscode-test/` on first run.
+      - name: Run integration tests
+        run: xvfb-run -a npm test
+
+  build:
+    name: Lint, type-check & package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npm run check-types
+
+      - name: Lint
+        run: npm run lint
+
+      # Builds (esbuild --production) and produces the installable .vsix.
+      # Also validates the manifest — engines, icon, README, etc.
+      - name: Package extension
+        run: npx --yes @vscode/vsce package --out django-cotton-props.vsix
+
+      - name: Upload .vsix
+        uses: actions/upload-artifact@v4
+        with:
+          name: django-cotton-props-vsix
+          path: django-cotton-props.vsix
+          if-no-files-found: error

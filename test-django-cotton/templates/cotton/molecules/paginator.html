@@ -1,0 +1,9 @@
+<!-- TEST FIXTURE: the `page` and `total-pages` defaults are INTENTIONALLY
+     mismatched between @prop and <c-vars> to exercise the "default mismatch"
+     diagnostic on multiple props. Don't "fix" them. -->
+{# @description Page navigation control. #}
+{# @prop :page:number | default:1 | description:"Current page" #}
+{# @prop :total-pages:number | default:10 | description:"Total number of pages" #}
+<c-vars :page="0" :total-pages="1" />
+
+<nav class="paginator">Page {{ page }} of {{ total_pages }}</nav>

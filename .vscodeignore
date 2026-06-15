@@ -1,0 +1,37 @@
+# What stays OUT of the published .vsix. Anything not matched here ships —
+# so the test workspace, coverage report, and dev tooling MUST be listed,
+# otherwise they bloat (and leak) the package. Keep this tight: the vsix
+# should contain only dist/, media/, snippets.json, and the docs.
+
+# ── Dev tooling / editor config ──
+.vscode/**
+.vscode-test/**
+.github/**
+out/**
+node_modules/**
+src/**
+.gitignore
+.yarnrc
+esbuild.js
+Makefile
+vsc-extension-quickstart.md
+**/tsconfig.json
+**/eslint.config.mjs
+**/*.map
+**/*.ts
+**/.vscode-test.*
+
+# ── Test fixture workspace (a full Django app + .venv — ~3900 files) ──
+test-django-cotton/**
+
+# ── Generated / local-only artifacts ──
+coverage/**
+*.vsix
+
+# ── README assets: served from GitHub via absolute URLs, not bundled ──
+images/**
+
+# ── Internal docs / source assets not for end users ──
+PLAN.md
+CLAUDE.md
+icon.svg

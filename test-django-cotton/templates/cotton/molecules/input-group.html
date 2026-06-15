@@ -1,0 +1,11 @@
+<!-- TEST FIXTURE: `label` has an @prop default but is INTENTIONALLY left bare
+     in <c-vars> (no value) to exercise the "bare <c-vars> attr" diagnostic. -->
+{# @description A labelled input group. #}
+{# @prop label:text | default:"Email" | description:"Field label" #}
+{# @prop :errors:text | description:"Validation errors" #}
+<c-vars label :errors />
+
+<div class="input-group">
+  <label>{{ label }}</label>
+  {{ slot }}
+</div>

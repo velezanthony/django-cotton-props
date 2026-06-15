@@ -1,0 +1,8 @@
+{# @description A content card with an optional title. #}
+{# @prop title:text | default:"" | description:"Card title" #}
+<c-vars title="" />
+
+<div class="card">
+  {% if title %}<h3 class="card-title">{{ title }}</h3>{% endif %}
+  {{ slot }}
+</div>

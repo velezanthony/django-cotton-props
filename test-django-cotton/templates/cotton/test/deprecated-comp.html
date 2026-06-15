@@ -1,0 +1,9 @@
+{# @prop title:text | description:"Card title" #}
+{# @prop variant:select['light', 'dark'] | default:"light" | description:"Color scheme" #}
+{# @prop old-color:text | deprecated:"Use variant instead" #}
+<c-vars title variant="light" old-color />
+
+<div class="card card-{{ variant }}">
+  <h4>{{ title }}</h4>
+  {{ slot }}
+</div>

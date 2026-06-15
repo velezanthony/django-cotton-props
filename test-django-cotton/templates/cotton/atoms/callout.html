@@ -1,0 +1,9 @@
+{# @description A highlighted callout box. #}
+{# @prop variant:select['info', 'tip', 'warning'] | default:"info" | description:"Callout style" #}
+{# @prop title:text | default:"" | description:"Optional heading" #}
+<c-vars variant="info" title="" />
+
+<div class="callout callout-{{ variant }}">
+  {% if title %}<strong>{{ title }}</strong>{% endif %}
+  {{ slot }}
+</div>

@@ -1,0 +1,9 @@
+{# @description A dismissible alert banner. #}
+{# @prop variant:select['info', 'success', 'warning', 'danger'] | default:"info" | description:"Alert style" #}
+{# @prop dismissible:boolean | default:False | description:"Show close button" #}
+<c-vars variant="info" dismissible=False />
+
+<div class="alert alert-{{ variant }}" role="alert">
+  {{ slot }}
+  {% if dismissible is True %}<button type="button" class="alert-close">&times;</button>{% endif %}
+</div>
