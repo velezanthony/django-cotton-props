@@ -7,6 +7,13 @@ const ATTR_RE = /\s(:?)([\w-]+)/g;
 
 export class CottonInlayHintsProvider implements vscode.InlayHintsProvider {
 
+    private readonly _onDidChangeInlayHints = new vscode.EventEmitter<void>();
+    /** VS Code caches hints and won't re-query on a settings change on its own;
+     *  firing this event is the only way to re-render when the toggle flips. */
+    readonly onDidChangeInlayHints = this._onDidChangeInlayHints.event;
+
+    refresh(): void { this._onDidChangeInlayHints.fire(); }
+
     provideInlayHints(document: vscode.TextDocument, range: vscode.Range): vscode.InlayHint[] {
         const config = vscode.workspace.getConfiguration('djangoCottonProps');
         if (!config.get<boolean>('inlayHints.showDefaults', true)) { return []; }

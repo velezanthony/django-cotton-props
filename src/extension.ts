@@ -249,6 +249,7 @@ function registerLanguageFeatures(
     codeLensProvider: CottonCodeLensProvider,
     diagnostics: vscode.DiagnosticCollection,
 ): void {
+    const inlayHintsProvider = new CottonInlayHintsProvider();
     context.subscriptions.push(
         vscode.languages.registerCompletionItemProvider(selector, new TagCompletionProvider(), '<'),
         vscode.languages.registerCompletionItemProvider(selector, new IsValueCompletionProvider(), '"', "'", '.'),
@@ -264,7 +265,12 @@ function registerLanguageFeatures(
         vscode.languages.registerRenameProvider(selector, new CottonRenameProvider(usageIndex)),
         vscode.languages.registerDocumentSemanticTokensProvider(selector, new CottonSemanticTokenProvider(), SEMANTIC_LEGEND),
         vscode.languages.registerFoldingRangeProvider(selector, new CottonFoldingProvider()),
-        vscode.languages.registerInlayHintsProvider(selector, new CottonInlayHintsProvider()),
+        vscode.languages.registerInlayHintsProvider(selector, inlayHintsProvider),
+        vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration('djangoCottonProps.inlayHints.showDefaults')) {
+                inlayHintsProvider.refresh();
+            }
+        }),
         vscode.languages.registerSignatureHelpProvider(selector, new CottonSignatureHelpProvider(), ' ', '='),
         vscode.languages.registerCodeLensProvider(selector, codeLensProvider),
         ...createAutoRenameTag(),
