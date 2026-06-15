@@ -44,13 +44,13 @@ First public release — a complete IntelliSense, validation, and tooling suite 
 ### Configuration
 
 - `djangoCottonProps.templatePaths` — depth-agnostic, multi-app component discovery.
-- `djangoCottonProps.excludePaths` — folders skipped when scanning for usages.
+- `djangoCottonProps.excludePaths` — folders skipped entirely, dropped from both the component tree and the usage scan.
 - `djangoCottonProps.inlayHints.showDefaults`, `djangoCottonProps.dynamicAttr.showExpressionHint`, `djangoCottonProps.diagnostics.missingDescription.severity`.
-- All path settings apply **live** — no window reload.
+- All settings apply **live** — no window reload.
 
 ### Quality & security
 
-- **567 automated tests** running in a real VS Code Extension Host.
+- **585 automated tests** running in a real VS Code Extension Host.
 - Path-traversal guard on Extract to Component; undoable file creation via `WorkspaceEdit`; a scripts-disabled detail webview with a strict Content-Security-Policy and full HTML escaping.
 - Surgical sidebar refresh (no full rebuild per keystroke) and parallel-batched workspace scanning for fast activation on large projects.
 
