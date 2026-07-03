@@ -158,13 +158,13 @@ export function scanComponents(): ComponentInfo[] {
     const excludes = getExcludePaths();
     const components: ComponentInfo[] = [];
     for (const tplPath of getTemplatePaths()) {
-        walkSync(path.join(root, tplPath), '', components, root, excludes);
+        walkSync(path.join(root, tplPath), components, root, excludes);
     }
     scanCache = components;
     return components;
 }
 
-function walkSync(dir: string, prefix: string, out: ComponentInfo[], root: string, excludes: string[]): void {
+function walkSync(dir: string, out: ComponentInfo[], root: string, excludes: string[]): void {
     let entries: fs.Dirent[];
     try { entries = fs.readdirSync(dir, { withFileTypes: true }); }
     catch (err) {
@@ -185,10 +185,12 @@ function walkSync(dir: string, prefix: string, out: ComponentInfo[], root: strin
             // templates/cotton/icons) would reappear in the tree on cold start.
             const relPath = path.relative(root, fullPath).replace(/\\/g, '/');
             if (isExcludedDir(entry.name, relPath, excludes)) { continue; }
-            walkSync(fullPath, prefix ? `${prefix}.${entry.name}` : entry.name, out, root, excludes);
+            walkSync(fullPath, out, root, excludes);
         } else if (entry.isFile() && entry.name.endsWith(HTML_EXT)) {
-            const name = entry.name.slice(0, -HTML_EXT.length);
-            out.push({ tag: prefix ? `${prefix}.${name}` : name, filePath: fullPath });
+            // Single source of truth for tag derivation — honours the index.html
+            // convention and stays in lockstep with the async prewarm scan.
+            const tag = filePathToTag(fullPath);
+            if (tag) { out.push({ tag, filePath: fullPath }); }
         }
     }
 }
@@ -231,7 +233,13 @@ export function filePathToTag(filePath: string): string | undefined {
         if (idx === -1) { continue; }
         const relative = normalized.substring(idx + marker.length);
         if (!relative.endsWith(HTML_EXT)) { continue; }
-        return relative.slice(0, -HTML_EXT.length).replace(/\//g, '.');
+        let rel = relative.slice(0, -HTML_EXT.length);
+        // Django Cotton's index convention: `card/index.html` is the folder's
+        // default component, addressed as <c-card /> — not <c-card.index>. A
+        // bare root `index.html` names no folder, so it is not a component.
+        if (rel === 'index') { return undefined; }
+        if (rel.endsWith('/index')) { rel = rel.slice(0, -'/index'.length); }
+        return rel.replace(/\//g, '.');
     }
     return undefined;
 }
