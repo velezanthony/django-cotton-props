@@ -69,6 +69,39 @@ suite('Scanner', () => {
         assert.strictEqual(tag, undefined);
     });
 
+    // ── index.html convention (Django Cotton) ──
+    // `cotton/card/index.html` is the default component for the folder and is
+    // addressed as <c-card />, NOT <c-card.index>. The trailing `index`
+    // segment collapses to its parent folder.
+
+    test('filePathToTag collapses a folder index.html to the folder name', () => {
+        const folder = vscode.workspace.workspaceFolders?.[0];
+        assert.ok(folder);
+        const p = folder.uri.fsPath + '/templates/cotton/parent_one/index.html';
+        assert.strictEqual(filePathToTag(p), 'parent_one');
+    });
+
+    test('filePathToTag collapses a nested index.html to its dotted folder path', () => {
+        const folder = vscode.workspace.workspaceFolders?.[0];
+        assert.ok(folder);
+        const p = folder.uri.fsPath + '/templates/cotton/parent_one/parent_two/index.html';
+        assert.strictEqual(filePathToTag(p), 'parent_one.parent_two');
+    });
+
+    test('filePathToTag ignores the root index.html (no folder to name it)', () => {
+        const folder = vscode.workspace.workspaceFolders?.[0];
+        assert.ok(folder);
+        const p = folder.uri.fsPath + '/templates/cotton/index.html';
+        assert.strictEqual(filePathToTag(p), undefined);
+    });
+
+    test('filePathToTag only collapses an exact "index" segment, not a prefix', () => {
+        const folder = vscode.workspace.workspaceFolders?.[0];
+        assert.ok(folder);
+        const p = folder.uri.fsPath + '/templates/cotton/atoms/index-page.html';
+        assert.strictEqual(filePathToTag(p), 'atoms.index-page');
+    });
+
     test('isCottonFile identifies cotton component paths', () => {
         const folder = vscode.workspace.workspaceFolders?.[0];
         assert.ok(folder);

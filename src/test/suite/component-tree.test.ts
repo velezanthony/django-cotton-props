@@ -3,7 +3,9 @@ import * as vscode from 'vscode';
 import {
     buildDescription,
     buildCategoryDescription,
+    buildTagTree,
     ComponentTreeProvider,
+    ComponentItem,
     type CategoryAggregate,
 } from '../../core/views/component-tree';
 import { CottonTreeDecorationProvider } from '../../core/views/tree-decorations';
@@ -204,5 +206,117 @@ suite('CottonTreeDecorationProvider: refreshUris', () => {
 
         provider.refreshUris([vscode.Uri.parse('untitled:/some-file')]);
         assert.strictEqual(fired, 0);
+    });
+});
+
+// ── N-level tree (trie) ──────────────────────────────────────────────────
+//
+// Tags are dot-paths (`parent_one.parent_two.widget`). buildTagTree turns the
+// flat scan into a nested trie so the view can render arbitrary depth. The
+// index.html convention (resolved in the scanner) lets one node be BOTH a
+// component (has its own file) AND a folder (has children).
+
+suite('ComponentTree: buildTagTree', () => {
+
+    test('a flat tag becomes a leaf child of the root', () => {
+        const tree = buildTagTree([{ tag: 'button', filePath: '/b.html' }]);
+        const node = tree.children.get('button');
+        assert.ok(node);
+        assert.strictEqual(node!.filePath, '/b.html');
+        assert.strictEqual(node!.children.size, 0);
+    });
+
+    test('a dotted tag creates intermediate folder nodes with no file', () => {
+        const tree = buildTagTree([{ tag: 'a.b.c', filePath: '/c.html' }]);
+        const a = tree.children.get('a');
+        assert.ok(a);
+        assert.strictEqual(a!.filePath, undefined, 'intermediate node is a pure folder');
+        const c = a!.children.get('b')!.children.get('c');
+        assert.ok(c);
+        assert.strictEqual(c!.filePath, '/c.html');
+        assert.strictEqual(c!.path, 'a.b.c', 'leaf carries its full dotted path');
+    });
+
+    test('a folder index + children makes one node both component and folder', () => {
+        const tree = buildTagTree([
+            { tag: 'card', filePath: '/card/index.html' },
+            { tag: 'card.header', filePath: '/card/header.html' },
+        ]);
+        const card = tree.children.get('card');
+        assert.ok(card);
+        assert.strictEqual(card!.filePath, '/card/index.html', 'has its own component file');
+        assert.strictEqual(card!.children.size, 1, 'and also has children');
+    });
+});
+
+suite('ComponentTreeProvider: N-level navigation', () => {
+
+    // Resolve a child by its full dotted path regardless of item kind
+    // (folder = CategoryItem, component = ComponentItem) — both expose `path`.
+    function byPath(items: vscode.TreeItem[], path: string): vscode.TreeItem | undefined {
+        return items.find(i => (i as unknown as { path: string }).path === path);
+    }
+
+    test('a folder with an index.html renders as an expandable component node', function () {
+        this.timeout(15000);
+        const provider = new ComponentTreeProvider();
+        const roots = provider.getChildren();
+        const p1 = byPath(roots, 'parent_one');
+        assert.ok(p1, 'parent_one should be a root node');
+        assert.ok(p1 instanceof ComponentItem, 'index.html makes it a component');
+        assert.notStrictEqual(
+            p1!.collapsibleState,
+            vscode.TreeItemCollapsibleState.None,
+            'having children makes it expandable',
+        );
+    });
+
+    test('navigates four folder levels down to the deepest leaf', function () {
+        this.timeout(15000);
+        const provider = new ComponentTreeProvider();
+        const p1 = byPath(provider.getChildren(), 'parent_one')!;
+        const p2 = byPath(provider.getChildren(p1 as never), 'parent_one.parent_two')!;
+        assert.ok(p2, 'depth 2 folder');
+        const p3 = byPath(provider.getChildren(p2 as never), 'parent_one.parent_two.parent_three')!;
+        assert.ok(p3, 'depth 3 folder');
+        const leaf = byPath(
+            provider.getChildren(p3 as never),
+            'parent_one.parent_two.parent_three.component_final',
+        );
+        assert.ok(leaf, 'depth 4 leaf component_final must be reachable');
+        assert.strictEqual(leaf!.collapsibleState, vscode.TreeItemCollapsibleState.None);
+    });
+
+    test('a folder+component node gets a theme-aware (light/dark) logo icon', function () {
+        this.timeout(15000);
+        const extensionUri = vscode.Uri.file('/ext');
+        const provider = new ComponentTreeProvider(undefined, extensionUri);
+        const p1 = byPath(provider.getChildren(), 'parent_one') as ComponentItem;
+        const icon = p1.iconPath as { light: vscode.Uri; dark: vscode.Uri };
+        assert.ok(icon.light && icon.dark, 'iconPath must carry light + dark variants');
+        assert.ok(icon.light.fsPath.endsWith('cotton-icon-light.svg'));
+        assert.ok(icon.dark.fsPath.endsWith('cotton-icon-dark.svg'));
+    });
+
+    test('a deep component refresh re-emits the component + every ancestor folder', function () {
+        this.timeout(15000);
+        const provider = new ComponentTreeProvider();
+        // Walk down so every node along the chain is cached.
+        const p1 = byPath(provider.getChildren(), 'parent_one')!;
+        const p2 = byPath(provider.getChildren(p1 as never), 'parent_one.parent_two')!;
+        const p3 = byPath(provider.getChildren(p2 as never), 'parent_one.parent_two.parent_three')!;
+        const leaf = byPath(
+            provider.getChildren(p3 as never),
+            'parent_one.parent_two.parent_three.widget_three',
+        ) as ComponentItem;
+        const fileUri = leaf.resourceUri!.with({ scheme: 'file' });
+
+        const fired: unknown[] = [];
+        provider.onDidChangeTreeData(e => { fired.push(e); });
+        provider.refreshForUris([fileUri]);
+
+        // widget_three (depth 4) → 1 component + 3 ancestor folders
+        // (parent_one, parent_one.parent_two, parent_one.parent_two.parent_three).
+        assert.strictEqual(fired.length, 4, `expected 4 surgical fires, got ${fired.length}`);
     });
 });

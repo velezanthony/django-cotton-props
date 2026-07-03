@@ -1,0 +1,8 @@
+{# @prop label:text | default:"Three" | description:"Widget label at depth 3" #}
+{# @slot Content — Widget body #}
+<c-vars label="Three" />
+
+<div class="widget widget-three">
+  <span>{{ label }}</span>
+  {{ slot }}
+</div>
