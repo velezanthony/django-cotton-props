@@ -1,0 +1,8 @@
+{# @prop title:text | default:"Parent One" | description:"Default component for the parent_one folder" #}
+{# @slot Content — Default component body #}
+<c-vars title="Parent One" />
+
+<section class="parent-one">
+  <h2>{{ title }}</h2>
+  {{ slot }}
+</section>

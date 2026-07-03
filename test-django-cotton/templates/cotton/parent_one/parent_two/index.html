@@ -1,0 +1,9 @@
+{# @prop title:text | default:"Parent Two" | description:"Default component for the parent_two folder" #}
+{# @prop collapsed:boolean | default:False | description:"Collapsed state" #}
+{# @slot Content — Default component body #}
+<c-vars title="Parent Two" collapsed=False />
+
+<section class="parent-two{% if collapsed %} is-collapsed{% endif %}">
+  <h3>{{ title }}</h3>
+  {{ slot }}
+</section>

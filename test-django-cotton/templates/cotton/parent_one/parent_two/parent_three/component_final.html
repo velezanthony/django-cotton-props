@@ -1,0 +1,9 @@
+{# @prop variant:select['primary', 'secondary', 'ghost'] | default:"primary" | description:"Style variant" #}
+{# @prop size:select['sm', 'md', 'lg'] | default:"md" | description:"Component size" #}
+{# @prop disabled:boolean | default:False | description:"Disable interaction" #}
+{# @slot Content — Final leaf component body #}
+<c-vars variant="primary" size="md" disabled=False />
+
+<div class="component-final component-final-{{ variant }} component-final-{{ size }}"{% if disabled %} aria-disabled="true"{% endif %}>
+  {{ slot }}
+</div>

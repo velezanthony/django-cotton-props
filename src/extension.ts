@@ -45,7 +45,7 @@ export function activate(context: vscode.ExtensionContext) {
     registerLanguageFeatures(context, selector, usageIndex, codeLensProvider, diagnostics);
 
     // ── Sidebar: Component Tree ──
-    const treeProvider = new ComponentTreeProvider(usageIndex);
+    const treeProvider = new ComponentTreeProvider(usageIndex, context.extensionUri);
     const treeView = vscode.window.createTreeView('cottonComponentsTree', {
         treeDataProvider: treeProvider,
         showCollapseAll: true,

@@ -1,0 +1,9 @@
+{# @prop label:text | default:"Two" | description:"Widget label at depth 2" #}
+{# @prop active:boolean | default:False | description:"Active state" #}
+{# @slot Content — Widget body #}
+<c-vars label="Two" active=False />
+
+<div class="widget widget-two{% if active %} is-active{% endif %}">
+  <span>{{ label }}</span>
+  {{ slot }}
+</div>
