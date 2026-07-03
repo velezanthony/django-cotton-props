@@ -1,0 +1,20 @@
+name: Guard main
+
+# GitHub branch protection guards the TARGET branch but cannot filter a PR's
+# SOURCE branch. This workflow supplies that missing piece as a status check:
+# make it a required check on `main` and only PRs opened from `development`
+# can merge — everything else lands a red check and the merge button locks.
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  source-branch:
+    name: Only development may merge to main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject PRs to main not opened from development
+        if: github.head_ref != 'development'
+        run: |
+          echo "::error::Only 'development' may open a PR against 'main'. Source branch was '${{ github.head_ref }}'."
+          exit 1
