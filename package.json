@@ -112,6 +112,16 @@
         "icon": "$(clippy)"
       },
       {
+        "command": "cotton.setFilter",
+        "title": "Filter Components",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "cotton.clearFilter",
+        "title": "Clear Filter",
+        "icon": "$(filter-filled)"
+      },
+      {
         "command": "cotton.wrapWithComponent",
         "title": "Django Cotton Props: Wrap with Component"
       },
@@ -127,9 +137,19 @@
     "menus": {
       "view/title": [
         {
+          "command": "cotton.setFilter",
+          "when": "view == cottonComponentsTree && !cotton.filterActive",
+          "group": "navigation@1"
+        },
+        {
+          "command": "cotton.clearFilter",
+          "when": "view == cottonComponentsTree && cotton.filterActive",
+          "group": "navigation@1"
+        },
+        {
           "command": "cotton.refreshTree",
           "when": "view == cottonComponentsTree",
-          "group": "navigation"
+          "group": "navigation@2"
         }
       ],
       "editor/context": [

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { scanComponents, invalidateScanCache, prewarmScanCache, getTemplatePaths, buildWatchGlob } from './core/scanner';
-import { COMMANDS, EXTENSION_NAME, SUPPORTED_LANGUAGES } from './core/constants';
+import { COMMANDS, CONTEXT_KEYS, EXTENSION_NAME, SUPPORTED_LANGUAGES } from './core/constants';
 import { shouldRetriggerTagCompletion } from './core/helpers/retrigger';
 import { isFileNotFound } from './core/helpers';
 import {
@@ -52,6 +52,19 @@ export function activate(context: vscode.ExtensionContext) {
         dragAndDropController: treeProvider,
     });
 
+    // Reflect the active filter in the view header and drive the title-bar
+    // button toggle (search icon when off, clear icon when a filter is set).
+    function applyFilter(text: string): void {
+        treeProvider.setFilter(text);
+        const active = treeProvider.filter !== '';
+        treeView.description = active ? `Filter: ${treeProvider.filter}` : undefined;
+        // A no-match filter collapses the tree to zero roots; without a message
+        // that reads as a blank, possibly-broken panel. Spell out the miss.
+        const empty = active && treeProvider.getChildren().length === 0;
+        treeView.message = empty ? `No components match "${treeProvider.filter}"` : undefined;
+        void vscode.commands.executeCommand('setContext', CONTEXT_KEYS.FILTER_ACTIVE, active);
+    }
+
     // Per-component badges (errors / warnings / hints / unused) on the tree.
     const treeDecorations = new CottonTreeDecorationProvider(usageIndex);
     context.subscriptions.push(
@@ -94,6 +107,28 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(COMMANDS.SELECT_COMPONENT, (item: ComponentItem) => {
             detailProvider.toggle(item.tag, item.filePath);
         }),
+        vscode.commands.registerCommand(COMMANDS.SET_FILTER, () => {
+            // Live filter: the tree narrows on every keystroke, so the shrinking
+            // tree IS the suggestion list — matching components appear as you
+            // type. createInputBox (not showInputBox) is what exposes the
+            // per-keystroke onDidChangeValue the live rebuild needs.
+            const input = vscode.window.createInputBox();
+            input.title = 'Filter Cotton components';
+            input.placeholder = 'e.g. button, atoms.card — the tree narrows as you type';
+            input.value = treeProvider.filter;
+            const original = treeProvider.filter;
+            let accepted = false;
+            input.onDidChangeValue(value => applyFilter(value));
+            input.onDidAccept(() => { accepted = true; input.hide(); });
+            input.onDidHide(() => {
+                // Esc (hide without accept) reverts to the pre-open filter; the
+                // live edits were provisional. Enter keeps what's on screen.
+                if (!accepted) { applyFilter(original); }
+                input.dispose();
+            });
+            input.show();
+        }),
+        vscode.commands.registerCommand(COMMANDS.CLEAR_FILTER, () => applyFilter('')),
         vscode.commands.registerCommand(COMMANDS.WRAP_WITH_COMPONENT, wrapWithComponent),
         vscode.commands.registerCommand(COMMANDS.EXTRACT_COMPONENT, extractComponent),
         vscode.commands.registerCommand(COMMANDS.FIND_EXTRACTABLE_PATTERNS, findExtractablePatterns),
