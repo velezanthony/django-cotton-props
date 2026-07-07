@@ -1,14 +1,12 @@
 import * as vscode from 'vscode';
 import { DIAG_CODE } from '../../constants';
 import { toKebab } from '../../naming';
+import { blankComments } from '../../parser';
+import { cvarsAttrRe, cvarsOpenRe } from '../../regex';
 import { attachQuickFix } from './quick-fix-data';
 import { nameVariations, SeenDefs } from './shared';
 
 const PROP_DEF_RE = /\{#\s*@prop\s+(:?)([\w-]+):.*?#\}/g;
-const CVARS_ATTR_RE = /:?([\w_-]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|(\w+)))?/g;
-const RAW_ATTR_RE = /(:?)([\w_-]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|(\w+)))?/g;
-const VARS_ATTR_RE = /:?([\w_-]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|\w+))?/g;
-const CVARS_TAG_RE = /<c-vars\s+([^>]*)>/;
 
 export interface CVarsInfo {
     match: RegExpMatchArray;
@@ -21,11 +19,13 @@ export interface CVarsInfo {
 }
 
 export function extractCVarsInfo(document: vscode.TextDocument, text: string): CVarsInfo | undefined {
-    const match = text.match(CVARS_TAG_RE);
+    // Blank comments first so a `<c-vars>` mention in one can't shadow the
+    // real tag; same-length blanking keeps match.index aligned with `text`.
+    const match = cvarsOpenRe().exec(blankComments(text));
     if (!match) { return undefined; }
 
     const attrs = match[1];
-    const start = text.indexOf(match[0]);
+    const start = match.index;
     const tagRange = new vscode.Range(
         document.positionAt(start),
         document.positionAt(start + match[0].length),
@@ -33,8 +33,8 @@ export function extractCVarsInfo(document: vscode.TextDocument, text: string): C
 
     const names = new Set<string>();
     const values = new Map<string, string | null>();
-    for (const cv of attrs.matchAll(CVARS_ATTR_RE)) {
-        const attrName = cv[1];
+    for (const cv of attrs.matchAll(cvarsAttrRe())) {
+        const attrName = cv[1].replace(/^:/, '');
         const attrValue = cv[2] ?? cv[3] ?? cv[4] ?? null;
         nameVariations(attrName).forEach(v => names.add(v));
         values.set(attrName, attrValue);
@@ -207,10 +207,10 @@ export function checkUndocumentedProps(
     const cVarsFullTag = cvars.match[0];
     let cVarsOrder = 0;
 
-    for (const match of cvars.attrs.matchAll(RAW_ATTR_RE)) {
-        const isDyn = match[1] === ':';
-        const attrName = match[2];
-        const attrVal = match[3] ?? match[4] ?? match[5] ?? '';
+    for (const match of cvars.attrs.matchAll(cvarsAttrRe())) {
+        const isDyn = match[1].startsWith(':');
+        const attrName = match[1].replace(/^:/, '');
+        const attrVal = match[2] ?? match[3] ?? match[4] ?? '';
         cVarsOrder++;
 
         const isDocumented = nameVariations(attrName).some(v => docNames.has(v));
@@ -255,8 +255,8 @@ export function checkUnusedProps(
 
     if (!body) { return diagnostics; }
 
-    for (const match of cvars.match[1].matchAll(VARS_ATTR_RE)) {
-        const varName = match[1];
+    for (const match of cvars.match[1].matchAll(cvarsAttrRe())) {
+        const varName = match[1].replace(/^:/, '');
         const isUsed = nameVariations(varName).some(v => body.includes(v));
         if (isUsed) { continue; }
 
