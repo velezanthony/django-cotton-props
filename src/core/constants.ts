@@ -39,6 +39,8 @@ export const COMMANDS = {
     OPEN_COMPONENT: 'cotton.openComponent',
     COPY_TAG: 'cotton.copyTag',
     SELECT_COMPONENT: 'cotton.selectComponent',
+    SET_FILTER: 'cotton.setFilter',
+    CLEAR_FILTER: 'cotton.clearFilter',
     WRAP_WITH_COMPONENT: 'cotton.wrapWithComponent',
     EXTRACT_COMPONENT: 'cotton.extractComponent',
     FIND_EXTRACTABLE_PATTERNS: 'cotton.findExtractablePatterns',
@@ -47,6 +49,7 @@ export const COMMANDS = {
 /** Context-key IDs we drive via `vscode.commands.executeCommand('setContext', ...)`. */
 export const CONTEXT_KEYS = {
     DETAIL_VISIBLE: 'cotton.detailVisible',
+    FILTER_ACTIVE: 'cotton.filterActive',
 } as const;
 
 /** Named handles for Cotton's three built-in tags. Use these instead of

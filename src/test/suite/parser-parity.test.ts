@@ -230,6 +230,15 @@ suite('Parser Parity (django-cotton-gallery canon)', () => {
             assert.deepStrictEqual(names, ['real']);
         });
 
+        test('ignores a bare <c-vars> mention inside an HTML <!-- --> comment', () => {
+            // Regression: a bare `<c-vars>` in an HTML comment shadowed the real one.
+            const src = '<!-- note: <c-vars> is mismatched below -->\n<c-vars real="y" />';
+            const result = parseComponent(src);
+            assert.ok(result.cvars);
+            const names = result.cvars!.attrs.map(a => a.cleanName);
+            assert.deepStrictEqual(names, ['real']);
+        });
+
         test('captures unquoted attribute values like is_active=True', () => {
             const result = parseComponent(FIXTURE);
             const isActive = result.cvars!.attrs.find(a => a.cleanName === 'is_active');
@@ -243,6 +252,38 @@ suite('Parser Parity (django-cotton-gallery canon)', () => {
             const variant = result.cvars!.attrs.find(a => a.cleanName === 'variant');
             assert.ok(variant);
             assert.strictEqual(variant!.value, 'primary');
+        });
+
+        test('single-quoted values are read (superset over gallery _ATTR)', () => {
+            // tag_parser accepts ' as well as "; gallery's _ATTR only handles ".
+            const result = parseComponent("<c-vars variant='primary' />");
+            const variant = result.cvars!.attrs.find(a => a.cleanName === 'variant');
+            assert.ok(variant, 'single-quoted attr not parsed');
+            assert.strictEqual(variant!.value, 'primary');
+            assert.strictEqual(variant!.hasValue, true);
+        });
+
+        test('unquoted value does not leak a phantom prop', () => {
+            // Regression: legacy reader matched `count` then `3` as a 2nd prop.
+            const result = parseComponent('<c-vars count=3 />');
+            const names = result.cvars!.attrs.map(a => a.cleanName);
+            assert.deepStrictEqual(names, ['count']);
+            assert.strictEqual(result.cvars!.attrs[0].value, '3');
+        });
+
+        test('tolerates whitespace around =', () => {
+            const result = parseComponent('<c-vars size = "md" />');
+            const size = result.cvars!.attrs.find(a => a.cleanName === 'size');
+            assert.ok(size, 'attr with spaced = not parsed');
+            assert.strictEqual(size!.value, 'md');
+        });
+
+        test('parseProps c-vars fallback stays free of phantom props', () => {
+            // No @prop → parseProps falls back to <c-vars>, sharing cvarsAttrRe.
+            const props = parseProps("<c-vars count=3 variant='primary' open />");
+            const names = props.map(p => p.cleanName);
+            assert.deepStrictEqual(names, ['count', 'variant', 'open']);
+            assert.strictEqual(props.find(p => p.cleanName === 'variant')!.defaultValue, 'primary');
         });
 
         test('returns null when no <c-vars> tag in source', () => {

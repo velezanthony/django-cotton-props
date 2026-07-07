@@ -57,6 +57,31 @@ export function cottonTagReferenceRe(): RegExp {
     return /<\/?(c-[\w.-]+)/g;
 }
 
+/**
+ * Opening `<c-vars ...>` tag (self-closing or not). `\b` blocks `<c-varsx>`;
+ * the non-greedy body lets `\s*\/?` claim the self-closing slash. NOT global —
+ * callers match the first declaration once. Group [1] = attribute body.
+ */
+export function cvarsOpenRe(): RegExp {
+    return /<c-vars\b([^>]*?)\s*\/?>/i;
+}
+
+/**
+ * The one canonical reader for a `<c-vars>` attribute — parser, diagnostics
+ * and quick-fixes all share it so they can't drift apart.
+ *
+ * Supersets django-cotton's runtime (`tag_parser.py`, the real source of
+ * truth — not the gallery's double-quote-only `_ATTR`): single OR double
+ * quotes, spaces around `=`, unquoted tokens, bare flags, optional `:` prefix.
+ * The `[A-Za-z_]` name anchor stops an unquoted value (`count=3`) reading as a
+ * phantom prop `3`.
+ *
+ * Groups: [1] name (incl `:`), [2] "value", [3] 'value', [4] unquoted.
+ */
+export function cvarsAttrRe(): RegExp {
+    return /(:?[A-Za-z_][\w-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"']+)))?/g;
+}
+
 // ── Regex helpers ────────────────────────────────────────────────────────
 
 /** Escape a string so it can be safely interpolated into a `new RegExp(...)`
