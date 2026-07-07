@@ -222,6 +222,16 @@ function buildTooltip(tag: string, counts: SeverityCounts, unused: boolean): vsc
     return md;
 }
 
+/** Case-insensitive substring match of a component tag against the active
+ *  filter. The full dotted tag is matched, so both the category segment
+ *  (`atoms`) and the name segment (`button`) of `atoms.button` are reachable.
+ *  An empty filter matches everything. The filter is expected pre-normalised
+ *  (trimmed + lowercased) by the caller — kept pure so it's unit-testable. */
+export function matchesFilter(tag: string, filter: string): boolean {
+    if (filter === '') { return true; }
+    return tag.toLowerCase().includes(filter);
+}
+
 export class ComponentTreeProvider implements vscode.TreeDataProvider<TreeItem>, vscode.TreeDragAndDropController<TreeItem> {
     private _onDidChangeTreeData = new vscode.EventEmitter<TreeItem | undefined>();
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
@@ -231,6 +241,8 @@ export class ComponentTreeProvider implements vscode.TreeDataProvider<TreeItem>,
      *  issued) and for resolving an element back to its trie node. */
     private _items = new Map<string, TreeItem>();
     private readonly _icon?: ThemedIcon;
+    /** Active tag filter, pre-normalised (trimmed + lowercased). Empty = off. */
+    private _filter = '';
 
     // ── Drag and Drop ──
     readonly dropMimeTypes: string[] = [];
@@ -254,6 +266,18 @@ export class ComponentTreeProvider implements vscode.TreeDataProvider<TreeItem>,
     }
 
     handleDrop(): void { /* drops go to editor via DocumentDropEditProvider */ }
+
+    /** Active filter text, so the extension can reflect it in the view header. */
+    get filter(): string { return this._filter; }
+
+    /** Set the tag filter and rebuild. A full refresh() is correct here: the
+     *  match set changes structurally, so the cached items must be dropped and
+     *  re-walked — same path as a file create/delete. Normalises once so the
+     *  getter and getChildren() agree on a single canonical form. */
+    setFilter(text: string): void {
+        this._filter = text.trim().toLowerCase();
+        this.refresh();
+    }
 
     /** Full rebuild — use for structural changes (file create/delete/rename)
      *  or explicit user refresh. Throws away the trie and per-item cache so the
@@ -299,7 +323,13 @@ export class ComponentTreeProvider implements vscode.TreeDataProvider<TreeItem>,
     }
 
     private ensureTree(): TagTreeNode {
-        if (!this._tree) { this._tree = buildTagTree(scanComponents()); }
+        // Apply the active filter at the scan boundary: the trie is built only
+        // from matching components, so a folder with no surviving child simply
+        // doesn't appear. Filtering here cascades through the whole tree, and
+        // setFilter()'s refresh() drops _tree so the next walk re-filters.
+        if (!this._tree) {
+            this._tree = buildTagTree(scanComponents().filter(c => matchesFilter(c.tag, this._filter)));
+        }
         return this._tree;
     }
 

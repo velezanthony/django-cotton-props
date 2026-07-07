@@ -1,4 +1,5 @@
 import { BUILTIN, COTTON_TAG_PREFIX } from './constants';
+import { cvarsAttrRe, cvarsOpenRe } from './regex';
 import type { CVar, CVarsBlock, ParsedComponent, PropDefinition, Slot } from './models';
 
 /** `'<c-vars'` — the literal opening of the c-vars built-in tag. Used as
@@ -9,18 +10,10 @@ export const PROP_BLOCK_RE = /\{#\s*@prop\s+(.+?)\s*#\}/g;
 const FILTER_RE = /^(\w[\w-]*)(?::(?:"([^"]*)"|(\S+)))?$/;
 const HEAD_RE = /^(:?[\w-]+):(\w+)(?:\[([^\]]*)\])?$/;
 const OPTION_RE = /'([^']*)'/g;
-const CVARS_TAG_RE = /<c-vars\s+([^>]+)>/;
-const CVARS_ATTR_RE = /(:?)([\w-]+)(?:=["']([^"']*)["'])?/g;
 const DESCRIPTION_RE = /\{#\s*@description\s+(.+?)\s*#\}/;
 const SLOT_RE = /\{#\s*@slot(?::([\w-]+))?\s*(.*?)\s*#\}/g;
 const TRIGGER_RE = /\{#\s*@trigger\s+(.*?)(?:\s*—\s*[^#]*)?\s*#\}/;
-// Matches `<c-vars [attrs]>` or `<c-vars [attrs] />`. The `\b` ensures
-// `<c-varsx>` is not picked up. Attribute body is captured non-greedily.
-const CVARS_OPEN_RE = /<c-vars\b([^>]*?)\s*\/?>/i;
-// Walks the attribute body. Mirrors the gallery's _ATTR — accepts quoted
-// values, unquoted tokens, and bare flags, with optional `:` dynamic prefix.
-const CVARS_BODY_ATTR_RE = /(:?[A-Za-z_][\w-]*)(?:=(?:"([^"]*)"|([^\s"]+)))?/g;
-const DJANGO_COMMENT_RE = /\{#[\s\S]*?#\}/g;
+const COMMENT_RE = /\{#[\s\S]*?#\}|<!--[\s\S]*?-->/g;
 // Mirrors the gallery's _ACCEPTS_ATTRS heuristic — three OR alternates so
 // any of {{ attrs }}, :attrs="attrs", or attrs="attrs" registers as a hit.
 const ACCEPTS_ATTRS_RE = /\{\{\s*attrs\b|:?attrs="attrs"|\battrs="attrs"/;
@@ -108,19 +101,21 @@ export function parseProps(content: string): PropDefinition[] {
 
     if (props.length > 0) { return props; }
 
-    const cVarsMatch = content.match(CVARS_TAG_RE);
+    const cVarsMatch = cvarsOpenRe().exec(blankComments(content));
     if (!cVarsMatch) { return []; }
 
-    for (const match of cVarsMatch[1].matchAll(CVARS_ATTR_RE)) {
+    for (const match of cVarsMatch[1].matchAll(cvarsAttrRe())) {
+        const name = match[1];
+        const value = match[2] ?? match[3] ?? match[4];
         props.push({
-            name: match[1] ? `:${match[2]}` : match[2],
-            cleanName: match[2],
+            name,
+            cleanName: name.replace(/^:/, ''),
             type: 'text',
             options: [],
-            defaultValue: match[3] || '',
-            hasDefault: match[3] !== undefined,
+            defaultValue: value ?? '',
+            hasDefault: value !== undefined,
             description: '',
-            isDynamic: match[1] === ':',
+            isDynamic: name.startsWith(':'),
             required: false,
             hidden: false,
             example: '',
@@ -169,16 +164,12 @@ export function detectsAcceptsAttrs(content: string): boolean {
 }
 
 /**
- * Replace `{# ... #}` comment bodies with same-length whitespace, so a
- * literal `<c-vars>` mention inside a comment cannot shadow the real one.
- *
- * Newlines are preserved on purpose — the gallery's Python equivalent
- * blanks them too, but doing so mutates line numbers for everything after
- * a multi-line comment. Keeping `\n` makes line tracking robust without
- * changing observable c-vars detection behavior.
+ * Blank out Django `{# #}` and HTML `<!-- -->` comment bodies so a literal
+ * `<c-vars>` mention inside one can't shadow the real declaration. Same-length
+ * (newlines kept) so offsets and line numbers stay aligned with the source.
  */
-function blankDjangoComments(source: string): string {
-    return source.replace(DJANGO_COMMENT_RE, m => m.replace(/[^\n]/g, ' '));
+export function blankComments(source: string): string {
+    return source.replace(COMMENT_RE, m => m.replace(/[^\n]/g, ' '));
 }
 
 function lineOf(source: string, offset: number): number {
@@ -190,9 +181,9 @@ function lineOf(source: string, offset: number): number {
 }
 
 export function parseCVars(content: string): CVarsBlock | null {
-    const cleaned = blankDjangoComments(content);
+    const cleaned = blankComments(content);
 
-    const tagMatch = CVARS_OPEN_RE.exec(cleaned);
+    const tagMatch = cvarsOpenRe().exec(cleaned);
     if (!tagMatch) { return null; }
 
     const tagStart = tagMatch.index;
@@ -200,12 +191,11 @@ export function parseCVars(content: string): CVarsBlock | null {
     const bodyStart = tagStart + tagMatch[0].indexOf(attrsBody, COTTON_VARS_PREFIX.length);
 
     const attrs: CVar[] = [];
-    for (const m of attrsBody.matchAll(CVARS_BODY_ATTR_RE)) {
+    for (const m of attrsBody.matchAll(cvarsAttrRe())) {
         const name = m[1];
-        const quoted = m[2];
-        const unquoted = m[3];
-        const hasValue = quoted !== undefined || unquoted !== undefined;
-        const value = quoted ?? unquoted ?? '';
+        const rawValue = m[2] ?? m[3] ?? m[4];
+        const hasValue = rawValue !== undefined;
+        const value = rawValue ?? '';
         attrs.push({
             name,
             cleanName: name.replace(/^:/, ''),

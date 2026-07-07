@@ -4,6 +4,7 @@ import {
     buildDescription,
     buildCategoryDescription,
     buildTagTree,
+    matchesFilter,
     ComponentTreeProvider,
     ComponentItem,
     type CategoryAggregate,
@@ -318,5 +319,95 @@ suite('ComponentTreeProvider: N-level navigation', () => {
         // widget_three (depth 4) → 1 component + 3 ancestor folders
         // (parent_one, parent_one.parent_two, parent_one.parent_two.parent_three).
         assert.strictEqual(fired.length, 4, `expected 4 surgical fires, got ${fired.length}`);
+    });
+});
+
+// ── Tag filter ───────────────────────────────────────────────────────────
+//
+// matchesFilter is the single matching rule the tree filter applies. Pulled
+// out as a pure function (like buildDescription) so the matching contract is
+// pinned independently of the disk scan. The filter arrives pre-normalised
+// (trimmed + lowercased) — setFilter owns normalisation; this stays pure.
+
+suite('ComponentTree: matchesFilter', () => {
+
+    test('empty filter matches everything', () => {
+        assert.strictEqual(matchesFilter('atoms.button', ''), true);
+    });
+
+    test('substring match is case-insensitive on the tag', () => {
+        assert.strictEqual(matchesFilter('atoms.Button', 'button'), true);
+    });
+
+    test('matches against the full dotted tag (category segment)', () => {
+        assert.strictEqual(matchesFilter('atoms.button', 'atoms'), true);
+    });
+
+    test('matches against the full dotted tag (name segment)', () => {
+        assert.strictEqual(matchesFilter('atoms.button', 'butt'), true);
+    });
+
+    test('returns false when the tag does not contain the filter', () => {
+        assert.strictEqual(matchesFilter('atoms.button', 'zzz'), false);
+    });
+});
+
+suite('ComponentTreeProvider: setFilter', () => {
+
+    test('setFilter normalises the stored value (trim + lowercase)', () => {
+        const provider = new ComponentTreeProvider();
+        provider.setFilter('  Button  ');
+        assert.strictEqual(provider.filter, 'button');
+    });
+
+    test('setFilter triggers a single full rebuild (fires undefined once)', () => {
+        const provider = new ComponentTreeProvider();
+        let fired = 0;
+        let lastArg: unknown = 'unset';
+        provider.onDidChangeTreeData(e => { fired++; lastArg = e; });
+
+        provider.setFilter('button');
+        assert.strictEqual(fired, 1);
+        assert.strictEqual(lastArg, undefined);
+    });
+
+    test('a filter that matches nothing collapses the tree to zero roots', function () {
+        this.timeout(15000);
+        const provider = new ComponentTreeProvider();
+        assert.ok(provider.getChildren().length > 0, 'Test workspace must have components');
+
+        provider.setFilter('zzz-definitely-no-such-component');
+        assert.strictEqual(provider.getChildren().length, 0);
+    });
+
+    test('clearing the filter restores the full tree', function () {
+        this.timeout(15000);
+        const provider = new ComponentTreeProvider();
+        const unfiltered = provider.getChildren().length;
+
+        provider.setFilter('zzz-definitely-no-such-component');
+        assert.strictEqual(provider.getChildren().length, 0);
+
+        provider.setFilter('');
+        assert.strictEqual(provider.getChildren().length, unfiltered);
+    });
+
+    test('every component left in the tree matches an active filter', function () {
+        this.timeout(15000);
+        const provider = new ComponentTreeProvider();
+        // Grab a real tag from the unfiltered tree, then filter by it.
+        const roots = provider.getChildren();
+        const firstChild = provider.getChildren(roots[0])[0] as ComponentItem;
+        const needle = firstChild.tag.toLowerCase();
+
+        provider.setFilter(needle);
+        for (const category of provider.getChildren()) {
+            for (const child of provider.getChildren(category)) {
+                assert.ok(
+                    (child as ComponentItem).tag.toLowerCase().includes(needle),
+                    `Unexpected non-matching component in filtered tree: ${(child as ComponentItem).tag}`,
+                );
+            }
+        }
     });
 });
